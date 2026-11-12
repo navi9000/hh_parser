@@ -1,0 +1,13 @@
+{
+  "name": "hh-scraper",
+  "private": true,
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @hh-scraper/api start:dev",
+    "dev:web": "pnpm --filter @hh-scraper/web dev",
+    "build": "pnpm --recursive --if-present build"
+  }
+}
