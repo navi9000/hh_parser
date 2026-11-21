@@ -1,38 +1,40 @@
-import { mount } from '@vue/test-utils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import App from './App.vue';
+import { mount } from "@vue/test-utils"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import App from "./App.vue"
 
-const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-  new Response(null, { status: 202 }),
-);
+const browserStartApiUrl = "http://127.0.0.1:3000/browser/start"
 
-describe('Run button', () => {
+const fetchMock = vi
+  .fn<typeof fetch>()
+  .mockResolvedValue(new Response(null, { status: 202 }))
+
+describe("Run button", () => {
   beforeEach(() => {
-    fetchMock.mockClear();
-    vi.stubGlobal('fetch', fetchMock);
-  });
+    fetchMock.mockClear()
+    vi.stubGlobal("fetch", fetchMock)
+  })
 
   afterEach(() => {
-    vi.unstubAllGlobals();
-  });
+    vi.unstubAllGlobals()
+  })
 
-  it('is available on the home page', () => {
-    const wrapper = mount(App);
+  it("is available on the home page", () => {
+    const wrapper = mount(App)
 
-    expect(wrapper.get('button').text()).toBe('Run');
-  });
+    expect(wrapper.get("button").text()).toBe("Run")
+  })
 
-  it('requests a browser launch at hh.ru when clicked', async () => {
-    const wrapper = mount(App);
+  it("requests a browser launch at hh.ru when clicked", async () => {
+    const wrapper = mount(App)
 
-    await wrapper.get('button').trigger('click');
+    await wrapper.get("button").trigger("click")
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/browser/start',
+      browserStartApiUrl,
       expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ url: 'https://hh.ru' }),
+        method: "POST",
+        body: JSON.stringify({ url: "https://hh.ru" }),
       }),
-    );
-  });
-});
+    )
+  })
+})

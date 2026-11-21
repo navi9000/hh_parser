@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+const browserStartApiUrl = 'http://127.0.0.1:3000/browser/start';
+
 test('Run asks the API to launch the browser at hh.ru', async ({ page }) => {
-  await page.route('**/browser/start', (route) =>
+  await page.route(browserStartApiUrl, (route) =>
     route.fulfill({
       status: 202,
       contentType: 'application/json',
@@ -14,7 +16,7 @@ test('Run asks the API to launch the browser at hh.ru', async ({ page }) => {
   await expect(runButton).toBeVisible();
 
   const startRequest = page.waitForRequest((request) =>
-    request.url().endsWith('/browser/start'),
+    request.url() === browserStartApiUrl,
   );
 
   await runButton.click();
