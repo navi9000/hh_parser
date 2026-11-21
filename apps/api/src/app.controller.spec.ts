@@ -1,44 +1,48 @@
 import 'reflect-metadata';
+import type { AddressInfo } from 'node:net';
 import { Test } from '@nestjs/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('./prisma.service', () => ({
-  PrismaService: class PrismaService {},
-}));
-
+import { describe, expect, it, vi } from 'vitest';
 import { AppController } from './app.controller';
-import { PrismaService } from './prisma.service';
 
-describe('AppController', () => {
-  const users = [{ id: 1, email: 'user@example.com', name: 'User' }];
-  const allUsers = vi.fn();
-  let controller: AppController;
+const browserProcessLauncher = 'BROWSER_PROCESS_LAUNCHER';
 
-  beforeEach(async () => {
-    allUsers.mockResolvedValue(users);
+describe('POST /browser/start', () => {
+  it('starts the detached browser with the requested initial URL', async () => {
+    const launcher = { launch: vi.fn().mockResolvedValue(undefined) };
     const moduleRef = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [
-        {
-          provide: PrismaService,
-          useValue: {
-            client: {
-              orm: { public: { User: { all: allUsers } } },
-            },
-          },
-        },
-      ],
+      providers: [{ provide: browserProcessLauncher, useValue: launcher }],
     }).compile();
+    const app = moduleRef.createNestApplication();
 
-    controller = moduleRef.get(AppController);
-  });
+    try {
+      await app.listen(0, '127.0.0.1');
+      const address: AddressInfo | string | null =
+        app.getHttpServer().address();
+      if (address === null || typeof address === 'string') {
+        throw new Error('Test server did not bind to a TCP port');
+      }
 
-  it('reports the API status', () => {
-    expect(controller.getStatus()).toEqual({ status: 'ok' });
-  });
+      const response = await fetch(
+        `http://127.0.0.1:${address.port}/browser/start`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ url: 'https://hh.ru' }),
+        },
+      );
 
-  it('lists users through the injected Prisma service', async () => {
-    await expect(controller.listUsers()).resolves.toEqual(users);
-    expect(allUsers).toHaveBeenCalledOnce();
+      expect(response.status).toBe(202);
+      expect(launcher.launch).toHaveBeenCalledOnce();
+      expect(launcher.launch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          env: expect.objectContaining({
+            HH_BROWSER_START_URL: 'https://hh.ru',
+          }),
+        }),
+      );
+    } finally {
+      await app.close();
+    }
   });
 });

@@ -1,13 +1,38 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.vue';
 
-describe('App', () => {
-  it('increments the click count', async () => {
+const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+  new Response(null, { status: 202 }),
+);
+
+describe('Run button', () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('is available on the home page', () => {
+    const wrapper = mount(App);
+
+    expect(wrapper.get('button').text()).toBe('Run');
+  });
+
+  it('requests a browser launch at hh.ru when clicked', async () => {
     const wrapper = mount(App);
 
     await wrapper.get('button').trigger('click');
 
-    expect(wrapper.get('button').text()).toBe('Clicked 1 time');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/browser/start',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ url: 'https://hh.ru' }),
+      }),
+    );
   });
 });
