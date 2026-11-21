@@ -1,3 +1,3 @@
 <template>
-  <main></main>
+  <main data-test="test"></main>
 </template>
