@@ -33,6 +33,8 @@ centralized there and use the injected service from feature providers.
 The API requires PostgreSQL 15+ and `DATABASE_URL` in `apps/api/.env`. Use
 `apps/api/.env.example` and the root `compose.yaml` for local setup.
 
-There are currently no API test or lint scripts or test files. Keep new
-behavior test-first; introduce and document an appropriate focused test runner
-when adding the first tests.
+API tests use Vitest with Nest's `@nestjs/testing` module. Place unit tests
+beside API source as `*.spec.ts`. Use explicit `@Inject` tokens on constructor
+dependencies so Nest's injection behavior is preserved in Vitest transforms.
+Run the full suite with `pnpm test`, or one file with
+`pnpm test -- apps/api/src/app.controller.spec.ts`.

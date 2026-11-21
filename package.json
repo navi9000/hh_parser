@@ -8,6 +8,14 @@
   "scripts": {
     "dev:api": "pnpm --filter @hh-scraper/api start:dev",
     "dev:web": "pnpm --filter @hh-scraper/web dev",
-    "build": "pnpm --recursive --if-present build"
+    "dev:browser": "pnpm --filter @hh-scraper/browser dev",
+    "build": "pnpm --recursive --if-present build",
+    "test": "node scripts/test.mjs",
+    "test:unit": "pnpm --filter @hh-scraper/api test && pnpm --filter @hh-scraper/web test && pnpm --filter @hh-scraper/browser test",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "vitest": "5.1.1"
   }
 }

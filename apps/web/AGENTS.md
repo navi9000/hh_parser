@@ -16,8 +16,8 @@ Structure new frontend code using the FSD hierarchy:
 - Keep shared, reusable infrastructure in `shared`; avoid putting product
   feature behavior there.
 
-There are currently no web test or lint scripts or test files. Follow the
-repository's test-first workflow and choose tests appropriate to the behavior;
-use Playwright for browser and end-to-end flows once the test runner is
-configured. The workspace Playwright MCP server is for interactive browser
-control, not a Playwright test-runner configuration.
+Frontend unit tests use Vitest and Vue Test Utils; place them beside the source
+as `*.spec.ts`. Run the full suite with `pnpm test`, or one file with
+`pnpm test -- apps/web/src/App.spec.ts`. Playwright Test covers browser and
+end-to-end flows in `tests/e2e`; run the full suite with `pnpm test` or a
+specific end-to-end file with `pnpm test -- tests/e2e/dashboard.spec.ts`.

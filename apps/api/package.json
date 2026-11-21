@@ -8,6 +8,7 @@
     "prestart:dev": "prisma contract emit",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
+    "test": "vitest run",
     "contract:emit": "prisma contract emit",
     "db:init": "prisma contract emit && prisma db init",
     "db:plan": "prisma migration plan",
