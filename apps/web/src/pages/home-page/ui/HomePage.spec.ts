@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import App from "./App.vue"
+import HomePage from "./HomePage.vue"
 
 const browserStartApiUrl = "http://127.0.0.1:3000/browser/start"
 
@@ -19,13 +19,13 @@ describe("Run button", () => {
   })
 
   it("is available on the home page", () => {
-    const wrapper = mount(App)
+    const wrapper = mount(HomePage)
 
     expect(wrapper.get("button").text()).toBe("Run")
   })
 
   it("requests a browser launch at hh.ru when clicked", async () => {
-    const wrapper = mount(App)
+    const wrapper = mount(HomePage)
 
     await wrapper.get("button").trigger("click")
 
