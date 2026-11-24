@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const browserMocks = vi.hoisted(() => {
+  const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
   const browser = {
     newContext: vi.fn().mockResolvedValue({
       newPage: vi.fn().mockResolvedValue({
@@ -8,6 +9,13 @@ const browserMocks = vi.hoisted(() => {
       }),
     }),
     close: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
+      listeners[event] ??= [];
+      listeners[event].push(listener);
+    }),
+    emit: vi.fn((event: string) => {
+      listeners[event]?.forEach((listener) => listener());
+    }),
   };
   return {
     browser,
@@ -72,6 +80,21 @@ describe('BrowserApp states', () => {
     await session.close();
 
     expect(app.state).toBe('idle');
+  });
+
+  it('returns to idle and accepts another session after the browser disconnects', async () => {
+    const app = new BrowserApp();
+    app.launchForeground();
+
+    await Promise.resolve();
+    browserMocks.browser.emit('disconnected');
+
+    expect(app.state).toBe('idle');
+
+    const nextSession = app.launchForeground();
+
+    expect(app.state).toBe('foreground');
+    expect(nextSession.mode).toBe('foreground');
   });
 
   it('accepts an intervention in the foreground while idle', () => {
