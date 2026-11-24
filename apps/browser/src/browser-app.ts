@@ -44,24 +44,34 @@ export class BrowserApp {
     this.state = mode;
 
     let session: BrowserSession;
-    const browserPromise = this.launchBrowser({ headless }).then(
-      async (browser) => {
-        browser.on('disconnected', () => {
-          if (this.activeSession === session) {
-            this.activeSession = undefined;
-            this.state = 'idle';
-          }
-        });
-        if (options.startUrl) {
+    let closed = false;
+    let browserDisconnected = false;
+    const browserPromise = this.launchBrowser({ headless }).then((browser) => {
+      browser.on('disconnected', () => {
+        browserDisconnected = true;
+        if (this.activeSession === session) {
+          this.activeSession = undefined;
+          this.state = 'idle';
+        }
+      });
+      return browser;
+    });
+
+    const startUrl = options.startUrl;
+    if (startUrl) {
+      void browserPromise
+        .then(async (browser) => {
           const context = await browser.newContext();
           const page = await context.newPage();
-          await page.goto(options.startUrl);
-        }
-        return browser;
-      },
-    );
+          await page.goto(startUrl);
+        })
+        .catch((error: unknown) => {
+          if (!closed && !browserDisconnected) {
+            console.error('Failed to load the browser start URL', error);
+          }
+        });
+    }
 
-    let closed = false;
     session = {
       mode,
       headless,

@@ -84,10 +84,44 @@ describe('BrowserApp states', () => {
     const closing = session.close();
 
     try {
-      expect(browserMocks.browser.close).toHaveBeenCalledOnce();
+      await vi.waitFor(() =>
+        expect(browserMocks.browser.close).toHaveBeenCalledOnce(),
+      );
     } finally {
       finishNavigation();
       await closing;
+    }
+  });
+
+  it('does not report a navigation rejection when the browser closes during initial load', async () => {
+    let rejectNavigation: (error: Error) => void = () => {};
+    const navigation = new Promise<void>((_, reject) => {
+      rejectNavigation = reject;
+    });
+    const goto = vi.fn(() => navigation);
+    browserMocks.browser.newContext.mockResolvedValueOnce({
+      newPage: vi.fn().mockResolvedValue({ goto }),
+    });
+    const logError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const app = new BrowserApp();
+    const session = app.launchForeground({
+      startUrl: 'https://hh.ru',
+    });
+
+    try {
+      await vi.waitFor(() => expect(goto).toHaveBeenCalledOnce());
+      rejectNavigation(
+        new Error('page.goto: Target page, context or browser has been closed'),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      browserMocks.browser.emit('disconnected');
+
+      expect(app.state).toBe('idle');
+      expect(logError).not.toHaveBeenCalled();
+    } finally {
+      await session.close();
+      logError.mockRestore();
     }
   });
 
