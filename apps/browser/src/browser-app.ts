@@ -1,4 +1,4 @@
-import { chromium, type Browser } from 'playwright';
+import { chromium } from 'playwright';
 
 export type BrowserAppState = 'idle' | 'background' | 'foreground';
 export type BrowserSessionMode = 'background' | 'foreground';
@@ -12,6 +12,13 @@ export interface BrowserSession {
   headless: boolean;
   startUrl?: string;
   close: () => Promise<void>;
+}
+
+function isBrowserClosedError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.message.includes('Target page, context or browser has been closed')
+  );
 }
 
 export class BrowserApp {
@@ -66,7 +73,7 @@ export class BrowserApp {
           await page.goto(startUrl);
         })
         .catch((error: unknown) => {
-          if (!closed && !browserDisconnected) {
+          if (!closed && !browserDisconnected && !isBrowserClosedError(error)) {
             console.error('Failed to load the browser start URL', error);
           }
         });
