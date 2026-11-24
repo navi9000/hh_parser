@@ -5,6 +5,8 @@
     "target": "ES2022",
     "strict": true,
     "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,

@@ -1,4 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
+
+const browserMocks = vi.hoisted(() => {
+  const browser = {
+    newContext: vi.fn().mockResolvedValue({
+      newPage: vi.fn().mockResolvedValue({
+        goto: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    browser,
+    launch: vi.fn().mockResolvedValue(browser),
+  };
+});
+
+vi.mock('playwright', () => ({
+  chromium: {
+    launch: browserMocks.launch,
+  },
+}));
+
 import { BrowserApp } from './browser-app.js';
 
 describe('BrowserApp states', () => {
@@ -8,7 +30,7 @@ describe('BrowserApp states', () => {
     expect(app.state).toBe('idle');
   });
 
-  it('launches a background browser session on request', () => {
+  it('launches a background browser session on request', async () => {
     const app = new BrowserApp();
 
     const session = app.launchBackground({
@@ -18,9 +40,10 @@ describe('BrowserApp states', () => {
     expect(app.state).toBe('background');
     expect(session.mode).toBe('background');
     expect(session.headless).toBe(true);
+    await session.close();
   });
 
-  it('launches a foreground browser session for user intervention', () => {
+  it('launches a foreground browser session for user intervention', async () => {
     const app = new BrowserApp();
 
     const session = app.launchForeground({
@@ -30,22 +53,23 @@ describe('BrowserApp states', () => {
     expect(app.state).toBe('foreground');
     expect(session.mode).toBe('foreground');
     expect(session.headless).toBe(false);
+    await session.close();
   });
 
-  it('returns to idle after the active background session closes', () => {
+  it('returns to idle after the active background session closes', async () => {
     const app = new BrowserApp();
     const session = app.launchBackground();
 
-    session.close();
+    await session.close();
 
     expect(app.state).toBe('idle');
   });
 
-  it('returns to idle after the foreground session closes', () => {
+  it('returns to idle after the foreground session closes', async () => {
     const app = new BrowserApp();
     const session = app.launchForeground();
 
-    session.close();
+    await session.close();
 
     expect(app.state).toBe('idle');
   });
