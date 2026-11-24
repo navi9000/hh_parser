@@ -64,6 +64,33 @@ describe('BrowserApp states', () => {
     await session.close();
   });
 
+  it('closes the foreground browser while the initial page is still loading', async () => {
+    let finishNavigation: () => void = () => {};
+    const navigation = new Promise<void>((resolve) => {
+      finishNavigation = resolve;
+    });
+    const goto = vi.fn(() => navigation);
+    browserMocks.browser.close.mockClear();
+    browserMocks.browser.newContext.mockResolvedValueOnce({
+      newPage: vi.fn().mockResolvedValue({ goto }),
+    });
+
+    const app = new BrowserApp();
+    const session = app.launchForeground({
+      startUrl: 'https://hh.ru',
+    });
+
+    await vi.waitFor(() => expect(goto).toHaveBeenCalledOnce());
+    const closing = session.close();
+
+    try {
+      expect(browserMocks.browser.close).toHaveBeenCalledOnce();
+    } finally {
+      finishNavigation();
+      await closing;
+    }
+  });
+
   it('returns to idle after the active background session closes', async () => {
     const app = new BrowserApp();
     const session = app.launchBackground();

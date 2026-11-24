@@ -43,18 +43,26 @@ export class BrowserApp {
   ): BrowserSession {
     this.state = mode;
 
-    let browserPromise: Promise<Browser> | undefined;
-    browserPromise = this.launchBrowser({ headless }).then(async (browser) => {
-      if (options.startUrl) {
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        await page.goto(options.startUrl);
-      }
-      return browser;
-    });
+    let session: BrowserSession;
+    const browserPromise = this.launchBrowser({ headless }).then(
+      async (browser) => {
+        browser.on('disconnected', () => {
+          if (this.activeSession === session) {
+            this.activeSession = undefined;
+            this.state = 'idle';
+          }
+        });
+        if (options.startUrl) {
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          await page.goto(options.startUrl);
+        }
+        return browser;
+      },
+    );
 
     let closed = false;
-    const session: BrowserSession = {
+    session = {
       mode,
       headless,
       startUrl: options.startUrl,
